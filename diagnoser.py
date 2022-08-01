@@ -1,6 +1,5 @@
 import memhitter
 import options
-
 from system import System
 
 class Diagnoser:

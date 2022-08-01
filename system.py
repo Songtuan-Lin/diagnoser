@@ -28,9 +28,11 @@ class System:
         try:
             with open(plan_file, "r") as pf:
                 lines = pf.readlines()
-                self.plan = [lines[idx].strip() for idx in range(len(lines) - 1) if lines[idx].strip()]
+                self.plan = [lines[idx].strip() for idx in range(len(lines)) if lines[idx].strip()]
         except FileNotFoundError:
             print("File {} does not exist".format(plan_file))
+        if self.plan[-1][0] == ";":
+            self.plan.pop(-1)
         self.__get_substitutions()
 
     def __parse(self, domain_file, task_file):
@@ -162,16 +164,21 @@ class System:
             if unsat_atom is not None:
                 return DiagnosisInfo(False, unsat_atom, idx)
             self.__next_state(action, substitution, s)
+        # is goal satisfied
+        for atom in self.task.goal.parts:
+            if atom not in s:
+                return DiagnosisInfo(False, atom, len(self.substitutions))
         return DiagnosisInfo(True, None, None)
 
     def find_conflict(self, candidate, info):
         assert(info.result == False)
         conflicts = set()
         atom, idx = info.atom, info.idx
-        action, _ = self.substitutions[idx]
-        atoms = self.__matching_prec(idx, atom)
-        for a in atoms:
-            conflicts.add(ComponentPrec(action.name, a))
+        if idx < len(self.substitutions):
+            action, _ = self.substitutions[idx]
+            atoms = self.__matching_prec(idx, atom)
+            for a in atoms:
+                conflicts.add(ComponentPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
             post_action = self.cache[i]
             action, substitution = self.substitutions[i]
