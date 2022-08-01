@@ -171,7 +171,7 @@ class System:
         assert(info.result == False)
         conflicts = set()
         atom, idx = info.atom, info.idx
-        if idx == len(self.substitutions):
+        if idx < len(self.substitutions):
             action, _ = self.substitutions[idx]
             atoms = self.__matching_prec(idx, atom)
             for a in atoms:
