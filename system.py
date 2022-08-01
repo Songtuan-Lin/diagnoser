@@ -25,9 +25,11 @@ class System:
         try:
             with open(plan_file, "r") as pf:
                 lines = pf.readlines()
-                self.plan = [lines[idx].strip() for idx in range(len(lines) - 1) if lines[idx].strip()]
+                self.plan = [lines[idx].strip() for idx in range(len(lines)) if lines[idx].strip()]
         except FileNotFoundError:
             print("File {} does not exist".format(plan_file))
+        if self.plan[-1][0] == ";":
+            self.plan.pop(-1)
         self.__get_substitutions()
 
     def __parse(self, domain_file, task_file):
