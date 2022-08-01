@@ -1,8 +1,8 @@
-from pddl.conditions import Atom
-from pddl.conditions import Conjunction
-from pddl.actions import Action
-from pddl.conditions import Truth
-from pddl.effects import Effect
+from fd.pddl.conditions import Atom
+from fd.pddl.conditions import Conjunction
+from fd.pddl.actions import Action
+from fd.pddl.conditions import Truth
+from fd.pddl.effects import Effect
 
 class Component:
     def __init__(self, action_name, atom):

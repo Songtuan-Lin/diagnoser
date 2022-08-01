@@ -11,10 +11,6 @@ def parse_args():
         "--task", help="path to task pddl file")
     argparser.add_argument(
         "--plan", help="path to plan file")
-    argparser.add_argument(
-        "-m", "--modify", action="store_true", help="randomly modify model", dest="modify")
-    argparser.add_argument(
-        "-n", "--num", help="number of modifications", dest="num", default=15, type=int)
     return argparser.parse_args()
 
 

@@ -3,9 +3,10 @@ import os
 sys.path.append(os.path.join(os.getcwd(), "downward", "src", "translate"))
 
 import pddl_parser
-import pddl
-from pddl.conditions import Atom
-from pddl.conditions import Conjunction
+from fd import pddl
+from fd.pddl import pddl_file
+from fd.pddl.conditions import Atom
+from fd.pddl.conditions import Conjunction
 from component import ComponentPrec, ComponentPosEff, ComponentNegEff
 from utils import TypeDGraph, find_all_tuples
 
@@ -17,10 +18,12 @@ class DiagnosisInfo:
 
 class System:
     def __init__(self, domain_file, task_file, plan_file):
-        self.task, self.constants = self.__parse(domain_file, task_file)
+        # self.task, self.constants = self.__parse(domain_file, task_file)
+        self.task = pddl_file.open(task_file, domain_file)
+        self.constants = list(self.task.constants)
         self.name_to_action = {a.name: a for a in self.task.actions}
         self.name_to_object = {o.name: o for o in self.task.objects}
-        self.object_to_type = {o.name: o.type_name for o in self.task.objects}
+        self.object_to_type = {o.name: o.type for o in self.task.objects}
         self.type_graph = TypeDGraph(self.task.types)
         try:
             with open(plan_file, "r") as pf:
@@ -97,7 +100,7 @@ class System:
             assert(len(action.parameters) == len(parts) - 1)
             var_map = {p.name: self.name_to_object[parts[idx + 1]] for idx, p in enumerate(action.parameters)}
             for p in action.parameters:
-                assert(p.type_name == var_map[p.name].type_name)
+                assert(p.type == var_map[p.name].type)
             var_map.update([(c.name, c) for c in self.constants])
             self.substitutions.append((action, var_map))
 
@@ -130,7 +133,7 @@ class System:
         for o in atom.args:
             paras = []
             for para in action.parameters:
-                if self.type_graph.subtype(self.object_to_type[o], para.type_name):
+                if self.type_graph.subtype(self.object_to_type[o], para.type):
                     paras.append(para.name)
             if o in substitution:
                 paras.append(o)
