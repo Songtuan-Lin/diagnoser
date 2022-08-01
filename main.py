@@ -26,9 +26,9 @@ if __name__ == "__main__":
             domain_file = os.path.join(fuzzed_dir, "domain.pddl")
             fuzzed_tasks.append((fuzzed_dir, domain_file, task_file, plan_file))
 
+    num_failed = 0
     for t in tqdm(fuzzed_tasks):
         fuzzed_dir, domain_file, task_file, plan_file = t
-        num_failed = 0
         try:
             start_time = time.process_time()
             syt = System(domain_file, task_file, plan_file)
