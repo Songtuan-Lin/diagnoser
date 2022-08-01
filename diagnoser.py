@@ -1,6 +1,5 @@
-import pddl_parser
 import memhitter
-
+import options
 from system import System
 
 class Diagnoser:
@@ -27,11 +26,8 @@ class Diagnoser:
             hitter.add_conflict(conflict)
     
 if __name__ == "__main__":
-    system = System("domain.pddl", "p18.pddl", "sas_plan") 
+    system = System(options.domain, options.task, options.plan) 
     diagnoser = Diagnoser(system)
-    diagnoser.system.task.actions[1].effects.pop(1)
-    diagnoser.system.task.actions[2].effects.pop(2)
-    diagnoser.system.task.actions[0].effects.pop(1)
     d = diagnoser.diagnosis()
     for c in d:
         print(c)

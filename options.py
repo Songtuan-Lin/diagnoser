@@ -4,7 +4,10 @@ import sys
 
 def parse_args():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--benchmark_dir", type=str, help="Directory of the benchmark set")
+    argparser.add_argument(
+        "--benchmark_dir", type=str, help="Directory of the benchmark set")
+    argparser.add_argument(
+        "--err_rate", type=float, help="Error rate")
     argparser.add_argument(
         "--domain", help="path to domain pddl file")
     argparser.add_argument(

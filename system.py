@@ -97,7 +97,7 @@ class System:
             assert(len(action.parameters) == len(parts) - 1)
             var_map = {p.name: self.name_to_object[parts[idx + 1]] for idx, p in enumerate(action.parameters)}
             for p in action.parameters:
-                assert(p.type_name == var_map[p.name].type_name)
+                assert(self.type_graph.subtype(var_map[p.name].type_name, p.type_name))
             var_map.update([(c.name, c) for c in self.constants])
             self.substitutions.append((action, var_map))
 

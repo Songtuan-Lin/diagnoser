@@ -20,7 +20,7 @@ if __name__ == "__main__":
             task_dir = os.path.join(domain_dir, task_name)
             if "sas_plan" not in os.listdir(task_dir):
                 continue
-            fuzzed_dir = os.path.join(task_dir, "err-rate-0.2")
+            fuzzed_dir = os.path.join(task_dir, "err-rate-{}".format(options.err_rate))
             task_file = os.path.join(task_dir, task_name + ".pddl")
             plan_file = os.path.join(task_dir, "sas_plan")
             domain_file = os.path.join(fuzzed_dir, "domain.pddl")
