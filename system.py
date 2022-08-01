@@ -161,16 +161,21 @@ class System:
             if unsat_atom is not None:
                 return DiagnosisInfo(False, unsat_atom, idx)
             self.__next_state(action, substitution, s)
+        # is goal satisfied
+        for atom in self.task.goal:
+            if atom not in s:
+                return DiagnosisInfo(False, atom, len(self.substitutions))
         return DiagnosisInfo(True, None, None)
 
     def find_conflict(self, candidate, info):
         assert(info.result == False)
         conflicts = set()
         atom, idx = info.atom, info.idx
-        action, _ = self.substitutions[idx]
-        atoms = self.__matching_prec(idx, atom)
-        for a in atoms:
-            conflicts.add(ComponentPrec(action.name, a))
+        if idx == len(self.substitutions):
+            action, _ = self.substitutions[idx]
+            atoms = self.__matching_prec(idx, atom)
+            for a in atoms:
+                conflicts.add(ComponentPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
             post_action = self.cache[i]
             action, substitution = self.substitutions[i]
