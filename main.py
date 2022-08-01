@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import resource
 import traceback
 import options
 
@@ -20,15 +21,17 @@ if __name__ == "__main__":
             task_dir = os.path.join(domain_dir, task_name)
             if "sas_plan" not in os.listdir(task_dir):
                 continue
-            fuzzed_dir = os.path.join(task_dir, "err-rate-0.2")
+            fuzzed_dir = os.path.join(task_dir, "err-rate-{}".format(options.err_rate))
             task_file = os.path.join(task_dir, task_name + ".pddl")
             plan_file = os.path.join(task_dir, "sas_plan")
             domain_file = os.path.join(fuzzed_dir, "domain.pddl")
             fuzzed_tasks.append((fuzzed_dir, domain_file, task_file, plan_file))
 
+    num_failed = 0
     for t in tqdm(fuzzed_tasks):
         fuzzed_dir, domain_file, task_file, plan_file = t
-        num_failed = 0
+        # soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+        # resource.setrlimit(resource.RLIMIT_AS, (8388608, hard))
         try:
             start_time = time.process_time()
             syt = System(domain_file, task_file, plan_file)
