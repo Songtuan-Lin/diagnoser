@@ -7,7 +7,7 @@ from fd import pddl
 from fd.pddl import pddl_file
 from fd.pddl.conditions import Atom
 from fd.pddl.conditions import Conjunction
-from component import ComponentPrec, ComponentPosEff, ComponentNegEff
+from component import ComponentPrec, ComponentPosEff, ComponentNegEff, CompPrec, CompEffAdd, CompEffDel
 from utils import TypeDGraph, find_all_tuples
 
 class DiagnosisInfo:
@@ -33,9 +33,9 @@ class System:
             print("File {} does not exist".format(plan_file))
         if self.plan[-1][0] == ";":
             self.plan.pop(-1)
-        self.__get_substitutions()
+        self._get_substitutions()
 
-    def __parse(self, domain_file, task_file):
+    def _parse(self, domain_file, task_file):
         domain_pddl = pddl_parser.pddl_file.parse_pddl_file("domain", domain_file)
         task_pddl = pddl_parser.pddl_file.parse_pddl_file("task", task_file)
 
@@ -55,7 +55,7 @@ class System:
         return pddl.Task(domain_name, task_name, requirements, types, objects, predicates, functions, init, goal, actions, axioms, use_metric), constants
 
 
-    def __is_prec_sat(self, action, substitution, s):
+    def _is_prec_sat(self, action, substitution, s):
         literals = (action.precondition,)
         if isinstance(action.precondition, Conjunction):
             literals = action.precondition.parts
@@ -66,7 +66,7 @@ class System:
                 return atom
         return None
 
-    def __group_comps(self, candidate):
+    def _group_comps(self, candidate):
         group_by_action = {}
         for comp in candidate:
             if comp.action_name in group_by_action:
@@ -75,7 +75,7 @@ class System:
                 group_by_action[comp.action_name] = [comp]
         return group_by_action
 
-    def __next_state(self, action, substitution, state):
+    def _next_state(self, action, substitution, state):
         add_effs, del_effs = set(), set()
         for eff in action.effects:
             assert(len(eff.parameters) == 0)
@@ -92,7 +92,7 @@ class System:
         for eff in add_effs:
             state.add(eff)  
         
-    def __get_substitutions(self):
+    def _get_substitutions(self):
         self.substitutions = []
         for a in self.plan:
             if a[0] == "(" and a[-1] == ")":
@@ -106,7 +106,7 @@ class System:
             var_map.update([(c.name, c) for c in self.constants])
             self.substitutions.append((action, var_map))
 
-    def __matching(self, parts, substitution, atom):
+    def _matching(self, parts, substitution, atom):
         atoms = set()
         for literal in parts:
             grounded_paras = tuple(substitution[para].name for para in literal.args)
@@ -114,21 +114,21 @@ class System:
                 atoms.add(literal)
         return atoms
 
-    def __matching_prec(self, idx, atom):
+    def _matching_prec(self, idx, atom):
         # atoms = set()
         action, substitution = self.substitutions[idx]
         literals = (action.precondition, )
         if isinstance(action.precondition, Conjunction):
             literals = action.precondition.parts
-        return self.__matching(literals, substitution, atom)
+        return self._matching(literals, substitution, atom)
 
-    def __matching_del_effs(self, idx, atom):
+    def _matching_del_effs(self, idx, atom):
         # atoms = set()
         action, substitution = self.substitutions[idx]
         del_effs = [eff.literal.negate() for eff in action.effects if eff.literal.negated]
-        return self.__matching(del_effs, substitution, atom)
+        return self._matching(del_effs, substitution, atom)
 
-    def __matching_add_effs(self, idx, atom):
+    def _matching_add_effs(self, idx, atom):
         # can be further optimized
         matched_paras = []
         action, substitution = self.substitutions[idx]
@@ -152,7 +152,7 @@ class System:
 
     def is_diagnosis(self, candidate):
         self.cache = []
-        group_by_action = self.__group_comps(candidate)
+        group_by_action = self._group_comps(candidate)
         s = set(self.task.init.copy())
         for idx, (action, substitution) in enumerate(self.substitutions):
             if action.name in group_by_action:
@@ -160,10 +160,10 @@ class System:
                     action = comp.apply(action) # apply the repair (component)
             self.cache.append(action)
             # decide whether the action's precondition is satisfied
-            unsat_atom = self.__is_prec_sat(action, substitution, s)
+            unsat_atom = self._is_prec_sat(action, substitution, s)
             if unsat_atom is not None:
                 return DiagnosisInfo(False, unsat_atom, idx)
-            self.__next_state(action, substitution, s)
+            self._next_state(action, substitution, s)
         # is goal satisfied
         for atom in self.task.goal.parts:
             if atom not in s:
@@ -176,24 +176,24 @@ class System:
         atom, idx = info.atom, info.idx
         if idx < len(self.substitutions):
             action, _ = self.substitutions[idx]
-            atoms = self.__matching_prec(idx, atom)
+            atoms = self._matching_prec(idx, atom)
             for a in atoms:
                 conflicts.add(ComponentPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
             post_action = self.cache[i]
             action, substitution = self.substitutions[i]
-            conf_del_effs = self.__matching_del_effs(i, atom)
+            conf_del_effs = self._matching_del_effs(i, atom)
             if len(conf_del_effs) != 0:
                 for a in conf_del_effs:
                     conflicts.add(ComponentNegEff(action.name, a))
                 break
-            conf_add_effs = self.__matching_add_effs(i, atom)
+            conf_add_effs = self._matching_add_effs(i, atom)
             for a in conf_add_effs:
                 conflicts.add(ComponentPosEff(action.name, a))
         return conflicts - candidate
 
 class SystemNegPrec(System):
-    def __is_prec_sat(self, action, substitution, s):
+    def _is_prec_sat(self, action, substitution, s):
         literals = (action.precondition,)
         if isinstance(action.precondition, Conjunction):
             literals = action.precondition.parts
@@ -206,39 +206,42 @@ class SystemNegPrec(System):
                 return atom.negate() # return a negated atom to indicate that it shall be deleted
         return None
 
-    def __matching_pos_effs(self, idx, atom):
+    def _matching_pos_effs(self, idx, atom):
         action, substitution = self.substitutions[idx]
         pos_effs = [eff.literal for eff in action.effects if not eff.literal.negated]
-        return self.__matching(pos_effs, substitution, atom)
+        return self._matching(pos_effs, substitution, atom)
         
     def find_conflict(self, candidate, info):
         atom, idx = info.atom, info.idx
         conflict = set()
-        if idx < len(self.substitutions):
+        assert(idx <= len(self.substitutions))
+        if idx != len(self.substitutions):
             action, _ = self.substitutions[idx]
-            atoms = self.__matching_prec(idx, atom)
+            atoms = self._matching_prec(idx, atom)
             for a in atoms:
                 conflict.add(CompPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
             action, substitution = self.substitutions[i]
             if not atom.negated:
-                conf_del_atoms = [a.negate() for a in self.__matching_del_effs(i, atom)]
+                conf_del_atoms = [a.negate() for a in self._matching_del_effs(i, atom)]
             else:
-                conf_del_atoms = self.__matching_pos_effs(i, atom.negate())
+                conf_del_atoms = self._matching_pos_effs(i, atom.negate())
             if len(conf_del_atoms) > 0:
-                for a in conf_neg_atoms:
+                for a in conf_del_atoms:
                     conflict.add(CompEffDel(action.name, a))
                 break
             if not atom.negated:
-                conf_add_atoms = self.__matching_add_effs(i, atom)
+                conf_add_atoms = self._matching_add_effs(i, atom)
             else:
-                conf_add_atoms = [a.negate() for a in self.__matching_add_effs(i, atom.negate())]
+                conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate())]
             for a in conf_add_atoms:
                 conflict.add(CompEffAdd(action.name, a))
         for c in conflict:
+            if isinstance(c, CompPrec):
+                continue
             if c.negate() in candidate:
                 c.is_condition = True
-        return conflict
+        return conflict - candidate
 
 if __name__ == "__main__":
     pass

@@ -5,7 +5,7 @@ import resource
 import traceback
 import options
 
-from system import System
+from system import System, SystemNegPrec
 from diagnoser import Diagnoser
 from tqdm import tqdm
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         fuzzed_dir, domain_file, task_file, plan_file = t
         try:
             start_time = time.process_time()
-            syt = System(domain_file, task_file, plan_file)
+            syt = SystemNegPrec(domain_file, task_file, plan_file)
             diagnoser = Diagnoser(syt)
             d = diagnoser.diagnosis()
             end_time = time.process_time()
