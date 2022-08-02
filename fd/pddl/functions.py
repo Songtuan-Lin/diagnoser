@@ -5,17 +5,11 @@ class Function(object):
         self.name = name
         self.arguments = arguments
     @classmethod
-    def parse(cls, alist):
+    def parse(cls, alist, type_name):
         name = alist[0]
         arguments = pddl_types.parse_typed_list(alist[1:],
                                                 default_type="number")
         return cls(name, arguments)
-
-    @classmethod
-    def parse_function(alist, type_name):
-        name = alist[0]
-        arguments = parse_typed_list(alist[1:])
-        return pddl.Function(name, arguments)
         
     def __str__(self):
         result = "%s(%s)" % (self.name, ", ".join(map(str, self.arguments)))
@@ -24,4 +18,6 @@ class Function(object):
         return result
 
     def pddl(self):
-        return "({0} {1})".format(self.name, ' - '.join(x.pddl() for x in self.arguments))
+        if len(self.arguments) == 0:
+            return "({0}) - {1}".format(self.name, "number")
+        return "({0} {1}) - {2}".format(self.name, ' - '.join(x.pddl() for x in self.arguments), "number")

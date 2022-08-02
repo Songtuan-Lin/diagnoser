@@ -88,11 +88,11 @@ class Task(object):
                 axiom.dump()
 
     def domain(self):
-        return "(define (domain {domain_name})\n  {requirements}\n  (:types\n\t{types})\n  (:constants {constants})\n  (:predicates\n\t{predicates})\n  (:functions {functions})\n  {actions} )".format(predicates='\n\t'.join(x.pddl() for x in self.predicates),
+        return "(define (domain {domain_name})\n  {requirements}\n  (:types {types})\n  (:constants {constants})\n  (:predicates {predicates})\n  (:functions {functions})\n  {actions})".format(predicates='\n\t'.join(x.pddl() for x in self.predicates),
                              functions='\n\t'.join(x.pddl() for x in self.functions),
-                             actions='\n\n'.join(x.pddl() for x in self.actions),
+                             actions='\n\n  '.join(x.pddl() for x in self.actions),
                              types='\n\t'.join(x.pddl() for x in self.types),
-                             constants=' '.join(x.pddl() for x in self.constants),
+                             constants='\n\t'.join(x.pddl() for x in self.constants),
                              domain_name=self.domain_name,
                              requirements=self.requirements.pddl())
 
@@ -174,8 +174,7 @@ def parse_domain(domain_pddl):
                                  [pddl_types.TypedObject("?x", "object"),
                                   pddl_types.TypedObject("?y", "object")])]
         elif field == ":functions":
-            the_functions = [functions.Function.parse(entry)
-                             for entry in opt[1:]]
+            the_functions = pddl_types.parse_typed_list(opt[1:], constructor=functions.Function.parse, default_type="number")
     pddl_types.set_supertypes(the_types)
     # for type in the_types:
     #   print repr(type), type.supertype_names
