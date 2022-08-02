@@ -66,9 +66,9 @@ class System:
                 return atom
         return None
 
-    def __group_comps(self, candidates):
+    def __group_comps(self, candidate):
         group_by_action = {}
-        for comp in candidates:
+        for comp in candidate:
             if comp.action_name in group_by_action:
                 group_by_action[comp.action_name].append(comp)
             else:
@@ -150,9 +150,9 @@ class System:
                 re.add(Atom(atom.predicate, t))
         return re
 
-    def is_diagnosis(self, candidates):
+    def is_diagnosis(self, candidate):
         self.cache = []
-        group_by_action = self.__group_comps(candidates)
+        group_by_action = self.__group_comps(candidate)
         s = set(self.task.init.copy())
         for idx, (action, substitution) in enumerate(self.substitutions):
             if action.name in group_by_action:
@@ -192,6 +192,29 @@ class System:
                 conflicts.add(ComponentPosEff(action.name, a))
         return conflicts - candidate
 
+class SystemNegPrec(System):
+    def __is_prec_sat(self, action, substitution, s):
+        literals = (action.precondition,)
+        if isinstance(action.precondition, Conjunction):
+            literals = action.precondition.parts
+        for literal in literals:
+            grounded_paras = tuple(substitution[para].name for para in literal.args)
+            atom = Atom(literal.predicate, grounded_paras)
+            if (not literal.negated) and (atom not in s):
+                return atom
+            if (literal.negated) and (atom in s):
+                return atom.negate() # return a negated atom to indicate that it shall be deleted
+        return None
+        
+    def find_conflict(self, candidate, info):
+        atom, idx = info.atom, info.idx
+        conflict = set()
+        if idx < len(self.substitutions):
+            action, _ = self.substitutions[idx]
+            atoms = self.__matching_prec(idx, atom)
+            for a in atoms:
+                conflict.add(CompPrec(action.name, a))
+        pass
 
 if __name__ == "__main__":
     pass
