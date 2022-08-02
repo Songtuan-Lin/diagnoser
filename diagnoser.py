@@ -22,7 +22,10 @@ class Diagnoser:
                     idx = len(self.comp_to_idx) + 1
                     self.comp_to_idx[c] = idx
                     self.idx_to_comp[idx] = c
-                conflict.append(self.comp_to_idx[c])
+                if c.is_condition:
+                    conflict.append(-self.comp_to_idx[c])
+                else:
+                    conflict.append(self.comp_to_idx[c])
             hitter.add_conflict(conflict)
     
 if __name__ == "__main__":

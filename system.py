@@ -115,7 +115,7 @@ class System:
         return atoms
 
     def __matching_prec(self, idx, atom):
-        atoms = set()
+        # atoms = set()
         action, substitution = self.substitutions[idx]
         literals = (action.precondition, )
         if isinstance(action.precondition, Conjunction):
@@ -123,7 +123,7 @@ class System:
         return self.__matching(literals, substitution, atom)
 
     def __matching_del_effs(self, idx, atom):
-        atoms = set()
+        # atoms = set()
         action, substitution = self.substitutions[idx]
         del_effs = [eff.literal.negate() for eff in action.effects if eff.literal.negated]
         return self.__matching(del_effs, substitution, atom)
@@ -205,6 +205,11 @@ class SystemNegPrec(System):
             if (literal.negated) and (atom in s):
                 return atom.negate() # return a negated atom to indicate that it shall be deleted
         return None
+
+    def __matching_pos_effs(self, idx, atom):
+        action, substitution = self.substitutions[idx]
+        pos_effs = [eff.literal for eff in action.effects if not eff.literal.negated]
+        return self.__matching(pos_effs, substitution, atom)
         
     def find_conflict(self, candidate, info):
         atom, idx = info.atom, info.idx
@@ -214,7 +219,26 @@ class SystemNegPrec(System):
             atoms = self.__matching_prec(idx, atom)
             for a in atoms:
                 conflict.add(CompPrec(action.name, a))
-        pass
+        for i in range(idx - 1, -1, -1):
+            action, substitution = self.substitutions[i]
+            if not atom.negated:
+                conf_del_atoms = [a.negate() for a in self.__matching_del_effs(i, atom)]
+            else:
+                conf_del_atoms = self.__matching_pos_effs(i, atom.negate())
+            if len(conf_del_atoms) > 0:
+                for a in conf_neg_atoms:
+                    conflict.add(CompEffDel(action.name, a))
+                break
+            if not atom.negated:
+                conf_add_atoms = self.__matching_add_effs(i, atom)
+            else:
+                conf_add_atoms = [a.negate() for a in self.__matching_add_effs(i, atom.negate())]
+            for a in conf_add_atoms:
+                conflict.add(CompEffAdd(action.name, a))
+        for c in conflict:
+            if c.negate() in candidate:
+                c.is_condition = True
+        return conflict
 
 if __name__ == "__main__":
     pass

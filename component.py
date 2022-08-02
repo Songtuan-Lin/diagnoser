@@ -8,6 +8,7 @@ class Component:
     def __init__(self, action_name, atom):
         self.action_name = action_name
         self.atom = atom
+        self.is_condition = False
 
     def __eq__(self, other):
         return self.__class__ is other.__class__ and self.action_name == other.action_name and self.atom == other.atom
