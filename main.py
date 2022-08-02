@@ -17,6 +17,8 @@ if __name__ == "__main__":
     fuzzed_tasks = []
     for domain_name in os.listdir(options.benchmark_dir):
         domain_dir = os.path.join(options.benchmark_dir, domain_name)
+        if not os.path.isdir(domain_dir):
+            continue
         for task_name in os.listdir(domain_dir):
             task_dir = os.path.join(domain_dir, task_name)
             if "sas_plan" not in os.listdir(task_dir):
