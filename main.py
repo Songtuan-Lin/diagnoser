@@ -55,5 +55,12 @@ if __name__ == "__main__":
                 f.write(str(c))
                 f.write("\n")
             f.write("time: {}".format(diagnosis_time))
+        
+        for idx, a in enumerate(syt.task.actions):
+            for c in d:
+                if a.name == c.action_name:
+                    syt.task.actions[idx] = c.apply(syt.task.actions[idx])
+        with open(os.path.join(fuzzed_dir, "domain-repaired.pddl"), "w") as f:
+            f.write(syt.task.domain())
     print("- Num failed: {}".format(num_failed))
 
