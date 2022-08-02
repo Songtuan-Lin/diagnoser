@@ -166,7 +166,9 @@ class System:
             self._next_state(action, substitution, s)
         # is goal satisfied
         for atom in self.task.goal.parts:
-            if atom not in s:
+            if (not atom.negated) and (atom not in s):
+                return DiagnosisInfo(False, atom, len(self.substitutions))
+            if (atom.negated) and (atom in s):
                 return DiagnosisInfo(False, atom, len(self.substitutions))
         return DiagnosisInfo(True, None, None)
 

@@ -17,10 +17,10 @@ class Diagnoser:
             if info.result:
                 return candidate
             conf = self.system.find_conflict(candidate, info)
-            print("==========================================")
-            print("- Iteration: {}".format(i))
-            for c in conf:
-                print(c)
+            # print("==========================================")
+            # print("- Iteration: {}".format(i))
+            # for c in conf:
+            #     print(c)
             conflict = []
             for c in conf:
                 if c not in self.comp_to_idx:
