@@ -7,7 +7,7 @@ from fd import pddl
 from fd.pddl import pddl_file
 from fd.pddl.conditions import Atom
 from fd.pddl.conditions import Conjunction
-from component import ComponentPrec, ComponentPosEff, ComponentNegEff, CompPrec, CompEffAdd, CompEffDel
+from component import CompPrec, CompEffAdd, CompEffDel
 from utils import TypeDGraph, find_all_tuples
 
 class DiagnosisInfo:
@@ -62,8 +62,10 @@ class System:
         for literal in literals:
             grounded_paras = tuple(substitution[para].name for para in literal.args)
             atom = Atom(literal.predicate, grounded_paras)
-            if atom not in s:
+            if (not literal.negated) and (atom not in s):
                 return atom
+            if (literal.negated) and (atom in s):
+                return atom.negate() # return a negated atom to indicate that it shall be deleted
         return None
 
     def _group_comps(self, candidate):
@@ -110,7 +112,10 @@ class System:
         atoms = set()
         for literal in parts:
             grounded_paras = tuple(substitution[para].name for para in literal.args)
-            if Atom(literal.predicate, grounded_paras) == atom:
+            target = Atom(literal.predicate, grounded_paras)
+            if literal.negated:
+                target = target.negate()
+            if target == atom:
                 atoms.add(literal)
         return atoms
 
@@ -122,11 +127,16 @@ class System:
             literals = action.precondition.parts
         return self._matching(literals, substitution, atom)
 
-    def _matching_del_effs(self, idx, atom):
+    def _matching_neg_effs(self, idx, atom):
         # atoms = set()
         action, substitution = self.substitutions[idx]
         del_effs = [eff.literal.negate() for eff in action.effects if eff.literal.negated]
         return self._matching(del_effs, substitution, atom)
+    
+    def _matching_pos_effs(self, idx, atom):
+        action, substitution = self.substitutions[idx]
+        pos_effs = [eff.literal for eff in action.effects if not eff.literal.negated]
+        return self._matching(pos_effs, substitution, atom)
 
     def _matching_add_effs(self, idx, atom):
         # can be further optimized
@@ -173,47 +183,6 @@ class System:
         return DiagnosisInfo(True, None, None)
 
     def find_conflict(self, candidate, info):
-        assert(info.result == False)
-        conflicts = set()
-        atom, idx = info.atom, info.idx
-        if idx < len(self.substitutions):
-            action, _ = self.substitutions[idx]
-            atoms = self._matching_prec(idx, atom)
-            for a in atoms:
-                conflicts.add(ComponentPrec(action.name, a))
-        for i in range(idx - 1, -1, -1):
-            post_action = self.cache[i]
-            action, substitution = self.substitutions[i]
-            conf_del_effs = self._matching_del_effs(i, atom)
-            if len(conf_del_effs) != 0:
-                for a in conf_del_effs:
-                    conflicts.add(ComponentNegEff(action.name, a))
-                break
-            conf_add_effs = self._matching_add_effs(i, atom)
-            for a in conf_add_effs:
-                conflicts.add(ComponentPosEff(action.name, a))
-        return conflicts - candidate
-
-class SystemNegPrec(System):
-    def _is_prec_sat(self, action, substitution, s):
-        literals = (action.precondition,)
-        if isinstance(action.precondition, Conjunction):
-            literals = action.precondition.parts
-        for literal in literals:
-            grounded_paras = tuple(substitution[para].name for para in literal.args)
-            atom = Atom(literal.predicate, grounded_paras)
-            if (not literal.negated) and (atom not in s):
-                return atom
-            if (literal.negated) and (atom in s):
-                return atom.negate() # return a negated atom to indicate that it shall be deleted
-        return None
-
-    def _matching_pos_effs(self, idx, atom):
-        action, substitution = self.substitutions[idx]
-        pos_effs = [eff.literal for eff in action.effects if not eff.literal.negated]
-        return self._matching(pos_effs, substitution, atom)
-        
-    def find_conflict(self, candidate, info):
         atom, idx = info.atom, info.idx
         conflict = set()
         assert(idx <= len(self.substitutions))
@@ -225,7 +194,7 @@ class SystemNegPrec(System):
         for i in range(idx - 1, -1, -1):
             action, substitution = self.substitutions[i]
             if not atom.negated:
-                conf_del_atoms = [a.negate() for a in self._matching_del_effs(i, atom)]
+                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(i, atom)]
             else:
                 conf_del_atoms = self._matching_pos_effs(i, atom.negate())
             if len(conf_del_atoms) > 0:
@@ -236,14 +205,33 @@ class SystemNegPrec(System):
                 conf_add_atoms = self._matching_add_effs(i, atom)
             else:
                 conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate())]
+            has_neg_conf = False
             for a in conf_add_atoms:
-                conflict.add(CompEffAdd(action.name, a))
-        for c in conflict:
+                comp = CompEffAdd(action.name, a)
+                conflict.add(comp)
+                for c in comp.negate():
+                    if c in candidate:
+                        has_neg_conf = True
+                        break
+            if has_neg_conf:
+                break
+
+        cached = set()
+        for c in candidate:
             if isinstance(c, CompPrec):
                 continue
-            if c.negate() in candidate:
-                c.is_condition = True
-        return conflict - candidate
+            neg_confs = c.negate()
+            for neg_conf in neg_confs:
+                if neg_conf in conflict:
+                    conflict.add(c)
+                    c.is_condition = True
+                    conflict.remove(neg_conf)
+                    cached.add(c)
+                    assert(c.is_condition)
+        for c in candidate:
+            if (c in conflict) and (c not in cached):
+                conflict.remove(c)
+        return conflict
 
 if __name__ == "__main__":
     pass

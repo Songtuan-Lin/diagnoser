@@ -22,48 +22,6 @@ class Component:
     def apply(self, action):
         pass
 
-
-class ComponentPrec(Component):
-    def __str__(self):
-        return "<Component: Remove {} from Precondition: {}>".format(self.atom, self.action_name)
-
-    def apply(self, action):
-        assert(self.action_name == action.name)
-        lits = (action.precondition,)
-        if isinstance(action.precondition, Conjunction):
-            lits = action.precondition.parts
-        new_lits = []
-        for l in lits:
-            if self.atom == l:
-                continue
-            new_lits.append(l)
-        new_prec = Conjunction(new_lits)
-        return Action(action.name, action.parameters, action.num_external_parameters, new_prec, action.effects, action.cost)
-
-class ComponentPosEff(Component):
-    def __str__(self):
-        return "<Component: Add {} to Pos-effects: {}>".format(self.atom, self.action_name)
-
-    def apply(self, action):
-        assert(self.action_name == action.name)
-        new_effs = [eff for eff in action.effects]
-        new_eff = Effect([], Truth(), self.atom)
-        new_effs.append(new_eff)
-        return Action(action.name, action.parameters, action.num_external_parameters, action.precondition, new_effs, action.cost)
-
-class ComponentNegEff(Component):
-    def __str__(self):
-        return "<Component: Remove {} from Neg-effects: {}>".format(self.atom, self.action_name)
-
-    def apply(self, action):
-        assert(self.action_name == action.name)
-        new_effs = []
-        for eff in action.effects:
-            if eff.literal == self.atom.negate():
-                continue
-            new_effs.append(eff)
-        return Action(action.name, action.parameters, action.num_external_parameters, action.precondition, new_effs, action.cost)
-
 class CompPrec(Component):
     def __str__(self):
         return "<Component: Remove {} from Precondition: {}>".format(self.atom, self.action_name)
@@ -93,7 +51,7 @@ class CompEffAdd(Component):
         return Action(action.name, action.parameters, action.num_external_parameters, action.precondition, new_effs, action.cost)
 
     def negate(self):
-        return CompEffDel(self.action_name, self.atom)
+        return {CompEffDel(self.action_name, self.atom), CompEffAdd(self.action_name, self.atom.negate())}
 
 class CompEffDel(Component):
     def __str__(self):
@@ -108,4 +66,4 @@ class CompEffDel(Component):
         return Action(action.name, action.parameters, action.num_external_parameters, action.precondition, new_effs, action.cost)
 
     def negate(self):
-        return CompEffAdd(self.action_name, self.atom)
+        return {CompEffAdd(self.action_name, self.atom), CompEffDel(self.action_name, self.atom.negate())}

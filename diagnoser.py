@@ -1,7 +1,7 @@
 import memhitter
 import options
 import os
-from system import System, SystemNegPrec
+from system import System
 
 class Diagnoser:
     def __init__(self, system):
@@ -9,6 +9,7 @@ class Diagnoser:
         self.idx_to_comp, self.comp_to_idx = {}, {}
 
     def diagnosis(self):
+        mem = []
         hitter = memhitter.Hitter()
         i = 0
         while True:
@@ -18,6 +19,15 @@ class Diagnoser:
             if info.result:
                 return candidate
             conf = self.system.find_conflict(candidate, info)
+            # mem.append(conf)
+            # print("================================")
+            # print("- Iteration: {}".format(i))
+            # for c in conf:
+            #     print(c)
+            # print("----------")
+            # print("- Conflicts")
+            # for c in mem:
+            #     print(c)
             conflict = []
             for c in conf:
                 if c not in self.comp_to_idx:
@@ -32,7 +42,7 @@ class Diagnoser:
             i += 1
     
 if __name__ == "__main__":
-    syt = SystemNegPrec(options.domain, options.task, options.plan) 
+    syt = System(options.domain, options.task, options.plan) 
     diagnoser = Diagnoser(syt)
     d = diagnoser.diagnosis()
     for c in d:
