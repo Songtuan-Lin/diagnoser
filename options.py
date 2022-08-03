@@ -5,15 +5,18 @@ import sys
 def parse_args():
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
-        "--benchmark_dir", type=str, help="Directory of the benchmark set")
+        "--benchmark_dir", type=str, help="directory of the benchmark set")
     argparser.add_argument(
-        "--err_rate", type=float, help="Error rate")
+        "--err_rate", type=float, help="error rate")
     argparser.add_argument(
         "--domain", help="path to domain pddl file")
     argparser.add_argument(
         "--task", help="path to task pddl file")
     argparser.add_argument(
         "--plan", help="path to plan file")
+    argparser.add_argument(
+        "--out_dir", help="path to write repaired domain pddl file"
+    )
     return argparser.parse_args()
 
 

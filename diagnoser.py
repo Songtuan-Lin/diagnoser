@@ -1,5 +1,6 @@
 import memhitter
 import options
+import os
 from system import System, SystemNegPrec
 
 class Diagnoser:
@@ -17,10 +18,6 @@ class Diagnoser:
             if info.result:
                 return candidate
             conf = self.system.find_conflict(candidate, info)
-            # print("==========================================")
-            # print("- Iteration: {}".format(i))
-            # for c in conf:
-            #     print(c)
             conflict = []
             for c in conf:
                 if c not in self.comp_to_idx:
@@ -40,3 +37,10 @@ if __name__ == "__main__":
     d = diagnoser.diagnosis()
     for c in d:
         print(c)
+    for idx, a in enumerate(syt.task.actions):
+            for c in d:
+                if a.name == c.action_name:
+                    syt.task.actions[idx] = c.apply(syt.task.actions[idx])
+
+    with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
+        f.write(syt.task.domain())
