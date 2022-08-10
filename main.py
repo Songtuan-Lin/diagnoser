@@ -21,6 +21,8 @@ if __name__ == "__main__":
             continue
         for task_name in os.listdir(domain_dir):
             task_dir = os.path.join(domain_dir, task_name)
+            if not os.path.isdir(task_dir):
+                continue
             if "sas_plan" not in os.listdir(task_dir):
                 continue
             fuzzed_dir = os.path.join(task_dir, "err-rate-{}".format(options.err_rate))

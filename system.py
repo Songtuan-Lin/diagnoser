@@ -194,14 +194,6 @@ class System:
         for i in range(idx - 1, -1, -1):
             action, substitution = self.substitutions[i]
             if not atom.negated:
-                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(i, atom)]
-            else:
-                conf_del_atoms = self._matching_pos_effs(i, atom.negate())
-            if len(conf_del_atoms) > 0:
-                for a in conf_del_atoms:
-                    conflict.add(CompEffDel(action.name, a))
-                break
-            if not atom.negated:
                 conf_add_atoms = self._matching_add_effs(i, atom)
             else:
                 conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate())]
@@ -214,6 +206,15 @@ class System:
                         has_neg_conf = True
                         break
             if has_neg_conf:
+                break
+
+            if not atom.negated:
+                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(i, atom)]
+            else:
+                conf_del_atoms = self._matching_pos_effs(i, atom.negate())
+            if len(conf_del_atoms) > 0:
+                for a in conf_del_atoms:
+                    conflict.add(CompEffDel(action.name, a))
                 break
 
         cached = set()
