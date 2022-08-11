@@ -17,6 +17,8 @@ def parse_args():
     argparser.add_argument(
         "--out_dir", help="path to write repaired domain pddl file"
     )
+    argparser.add_argument(
+        "--grounded", action="store_true", help="diagnosis in the grounded setting")
     return argparser.parse_args()
 
 

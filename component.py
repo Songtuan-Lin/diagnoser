@@ -18,13 +18,13 @@ class Component:
 
     def __repr__(self):
         return "{}".format(self)
-
+        
     def apply(self, action):
         pass
 
 class CompPrec(Component):
     def __str__(self):
-        return "<Component: Remove {} from Precondition: {}>".format(self.atom, self.action_name)
+        return "<Component: Remove {} from Precondition: {} | Condition: {}>".format(self.atom, self.action_name, self.is_condition)
 
     def apply(self, action):
         assert(self.action_name == action.name)
@@ -41,7 +41,7 @@ class CompPrec(Component):
 
 class CompEffAdd(Component):
     def __str__(self):
-        return "<Component: Add {} to Effects: {}>".format(self.atom, self.action_name)
+        return "<Component: Add {} to Effects: {} | Condition: {}>".format(self.atom, self.action_name, self.is_condition)
 
     def apply(self, action):
         assert(self.action_name == action.name)
@@ -55,7 +55,7 @@ class CompEffAdd(Component):
 
 class CompEffDel(Component):
     def __str__(self):
-        return "<Component: Remove {} from Effects: {}>".format(self.atom, self.action_name)
+        return "<Component: Remove {} from Effects: {} | Condition: {}>".format(self.atom, self.action_name, self.is_condition)
 
     def apply(self, action):
         new_effs = []

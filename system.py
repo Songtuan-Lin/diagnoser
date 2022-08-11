@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.join(os.getcwd(), "downward", "src", "translate"))
 
 import pddl_parser
+import copy
 from fd import pddl
 from fd.pddl import pddl_file
 from fd.pddl.conditions import Atom
@@ -196,7 +197,8 @@ class System:
             if not atom.negated:
                 conf_add_atoms = self._matching_add_effs(i, atom)
             else:
-                conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate())]
+                pos_atoms = [eff.literal for eff in self.substitutions[i][0].effects if not eff.literal.negated]
+                conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate()) if a not in pos_atoms]
             has_neg_conf = False
             for a in conf_add_atoms:
                 comp = CompEffAdd(action.name, a)
@@ -205,8 +207,6 @@ class System:
                     if c in candidate:
                         has_neg_conf = True
                         break
-            if has_neg_conf:
-                break
 
             if not atom.negated:
                 conf_del_atoms = [a.negate() for a in self._matching_neg_effs(i, atom)]
@@ -216,6 +216,8 @@ class System:
                 for a in conf_del_atoms:
                     conflict.add(CompEffDel(action.name, a))
                 break
+            if has_neg_conf:
+                break
 
         cached = set()
         for c in candidate:
@@ -224,11 +226,12 @@ class System:
             neg_confs = c.negate()
             for neg_conf in neg_confs:
                 if neg_conf in conflict:
-                    conflict.add(c)
-                    c.is_condition = True
+                    c_copy = copy.copy(c)
+                    conflict.add(c_copy)
+                    c_copy.is_condition = True
                     conflict.remove(neg_conf)
-                    cached.add(c)
-                    assert(c.is_condition)
+                    cached.add(c_copy)
+                    assert(c_copy.is_condition)
         for c in candidate:
             if (c in conflict) and (c not in cached):
                 conflict.remove(c)
