@@ -40,6 +40,34 @@ class Diagnoser:
                     conflict.append(self.comp_to_idx[c])
             hitter.add_conflict(conflict)
             i += 1
+
+class DiagnoserMult:
+    def __init__(self, system_mult):
+        self.system_mult = system_mult
+        self.idx_to_comp, self.comp_to_idx = {}, {}
+
+    def diagnosis(self):
+        hitter = memhitter.Hitter()
+        while True:
+            candidate = hitter.top()
+            candidate = set(self.idx_to_comp[x] for x in candidate)
+            infos = self.system_mult.is_diagnosis(candidate)
+            if infos.result:
+                return candidate
+            confs = self.system_mult.find_conflict(candidate, infos)
+            for conf in confs:
+                conflict = []
+                for c in conf:
+                    if c not in self.comp_to_idx:
+                        idx = len(self.comp_to_idx) + 1
+                        self.comp_to_idx[c] = idx
+                        self.idx_to_comp[idx] = c
+                    if c.is_condition:
+                        conflict.append(-self.comp_to_idx[c])
+                    else:
+                        conflict.append(self.comp_to_idx[c])
+                hitter.add_conflict(conflict)
+
     
 if __name__ == "__main__":
     syt = System(options.domain, options.task, options.plan) 

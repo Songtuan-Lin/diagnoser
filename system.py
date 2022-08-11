@@ -17,6 +17,15 @@ class DiagnosisInfo:
         self.atom = atom
         self.idx = idx
 
+class DiagnosisInfoMult:
+    def __init__(self, infos):
+        self.infos = infos
+        self.result = True
+        for info in self.infos:
+            if not info.result:
+                self.result = False
+                break
+
 class System:
     def __init__(self, domain_file, task_file, plan_file):
         # self.task, self.constants = self.__parse(domain_file, task_file)
@@ -237,6 +246,17 @@ class System:
             if (c in conflict) and (c not in cached):
                 conflict.remove(c)
         return conflict
+
+class SystemMult:
+    def __init__(self, domain_file, task_files, plan_files):
+        self.systems = [System(domain_file, task_file, plan_file) for task_file, plan_file in zip(task_files, plan_files)]
+    
+    def is_diagnosis(self, candidate):
+        return DiagnosisInfoMult([syt.is_diagnosis(candidate) for syt in self.systems])
+
+    def find_conflict(self, candidate, infos):
+        return [syt.find_conflict(candidate, info) for syt, info in zip(self.systems, infos.infos) if not info.result]
+
 
 if __name__ == "__main__":
     pass
