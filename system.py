@@ -197,8 +197,9 @@ class System:
             if not atom.negated:
                 conf_add_atoms = self._matching_add_effs(i, atom)
             else:
-                pos_atoms = [eff.literal for eff in self.substitutions[i][0].effects if not eff.literal.negated]
-                conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate()) if a not in pos_atoms]
+                # pos_atoms = [eff.literal for eff in self.substitutions[i][0].effects if not eff.literal.negated]
+                # conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate()) if a not in pos_atoms]
+                conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate())]
             has_neg_conf = False
             for a in conf_add_atoms:
                 comp = CompEffAdd(action.name, a)
