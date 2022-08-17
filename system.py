@@ -5,7 +5,7 @@ from fd.pddl.actions import Action
 from fd.pddl.conditions import Literal, Atom
 from fd.pddl.conditions import Conjunction
 from component import CompPrec, CompEffAdd, CompEffDel, Component
-from .fd.pddl.pddl_types import TypedObject
+from fd.pddl.pddl_types import TypedObject
 from utils import TypeDGraph, find_all_tuples
 
 VarSubstitution =  List[Tuple[Action, Dict[str, TypedObject]]]
