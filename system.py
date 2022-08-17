@@ -4,9 +4,11 @@ from fd.pddl import pddl_file
 from fd.pddl.actions import Action
 from fd.pddl.conditions import Literal, Atom
 from fd.pddl.conditions import Conjunction
-from component import CompPrec, CompEffAdd, CompEffDel
+from component import CompPrec, CompEffAdd, CompEffDel, Component
 from .fd.pddl.pddl_types import TypedObject
 from utils import TypeDGraph, find_all_tuples
+
+VarSubstitution =  List[Tuple[Action, Dict[str, TypedObject]]]
 
 class DiagnosisInfo:
     def __init__(self, result : bool, atom : Literal, idx : int):
@@ -47,7 +49,7 @@ class System:
         # computing variable substitution functions for each action in the plan
         self._get_substitutions()
 
-    def _is_prec_sat(self, action : Action, substitution : List[Tuple[Action, Dict[str, TypedObject]]], s : Set[Literal]):
+    def _is_prec_sat(self, action : Action, substitution : VarSubstitution, s : Set[Literal]):
         literals = (action.precondition,)
         if isinstance(action.precondition, Conjunction):
             literals = action.precondition.parts
@@ -60,7 +62,7 @@ class System:
                 return atom.negate() # return a negated atom to indicate that it shall be deleted
         return None
 
-    def _group_comps(self, candidate):
+    def _group_comps(self, candidate : Set[Component]) -> Dict[str, List[Component]]:
         group_by_action = {}
         for comp in candidate:
             if comp.action_name in group_by_action:
@@ -69,7 +71,7 @@ class System:
                 group_by_action[comp.action_name] = [comp]
         return group_by_action
 
-    def _next_state(self, action, substitution, state):
+    def _next_state(self, action : Action, substitution :  VarSubstitution, state : Set[Literal]) -> None:
         add_effs, del_effs = set(), set()
         for eff in action.effects:
             assert(len(eff.parameters) == 0)
@@ -86,7 +88,7 @@ class System:
         for eff in add_effs:
             state.add(eff)  
         
-    def _get_substitutions(self):
+    def _get_substitutions(self) -> None:
         self.substitutions = []
         for a in self.plan:
             if a[0] == "(" and a[-1] == ")":
@@ -100,7 +102,7 @@ class System:
             var_map.update([(c.name, c) for c in self.constants])
             self.substitutions.append((action, var_map))
 
-    def _matching(self, parts, substitution, atom):
+    def _matching(self, parts : List[Literal], substitution : VarSubstitution, atom : Literal) -> Set[Literal]:
         atoms = set()
         for literal in parts:
             grounded_paras = tuple(substitution[para].name for para in literal.args)
@@ -111,7 +113,7 @@ class System:
                 atoms.add(literal)
         return atoms
 
-    def _matching_prec(self, idx, atom):
+    def _matching_prec(self, idx : int, atom : Literal) -> Set[Literal]:
         # atoms = set()
         action, substitution = self.substitutions[idx]
         literals = (action.precondition, )
@@ -119,18 +121,18 @@ class System:
             literals = action.precondition.parts
         return self._matching(literals, substitution, atom)
 
-    def _matching_neg_effs(self, idx, atom):
+    def _matching_neg_effs(self, idx : int, atom : Literal) -> Set[Literal]:
         # atoms = set()
         action, substitution = self.substitutions[idx]
         del_effs = [eff.literal.negate() for eff in action.effects if eff.literal.negated]
         return self._matching(del_effs, substitution, atom)
     
-    def _matching_pos_effs(self, idx, atom):
+    def _matching_pos_effs(self, idx : int, atom : Literal) -> Set[Literal]:
         action, substitution = self.substitutions[idx]
         pos_effs = [eff.literal for eff in action.effects if not eff.literal.negated]
         return self._matching(pos_effs, substitution, atom)
 
-    def _matching_add_effs(self, idx, atom):
+    def _matching_add_effs(self, idx : int, atom : Literal) -> Set[Literal]:
         # can be further optimized
         matched_paras = []
         action, substitution = self.substitutions[idx]
@@ -152,7 +154,7 @@ class System:
                 re.add(Atom(atom.predicate, t))
         return re
 
-    def is_diagnosis(self, candidate):
+    def is_diagnosis(self, candidate : Set[Component]) -> DiagnosisInfo:
         self.cache = []
         group_by_action = self._group_comps(candidate)
         s = set(self.task.init.copy())
@@ -174,7 +176,7 @@ class System:
                 return DiagnosisInfo(False, atom, len(self.substitutions))
         return DiagnosisInfo(True, None, None)
 
-    def find_conflict(self, candidate, info):
+    def find_conflict(self, candidate : Set[Component], info : DiagnosisInfo) -> Set[Component]:
         atom, idx = info.atom, info.idx
         conflict = set()
         assert(idx <= len(self.substitutions))
