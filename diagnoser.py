@@ -73,12 +73,13 @@ if __name__ == "__main__":
     syt = System(options.domain, options.task, options.plan) 
     diagnoser = Diagnoser(syt)
     d = diagnoser.diagnosis()
+    print("******************************************")
     for c in d:
         print(c)
-    for idx, a in enumerate(syt.task.actions):
-            for c in d:
-                if a.name == c.action_name:
-                    syt.task.actions[idx] = c.apply(syt.task.actions[idx])
+    # for idx, a in enumerate(syt.task.actions):
+    #         for c in d:
+    #             if a.name == c.action_name:
+    #                 syt.task.actions[idx] = c.apply(syt.task.actions[idx])
 
-    with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
-        f.write(syt.task.domain())
+    # with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
+    #     f.write(syt.task.domain())

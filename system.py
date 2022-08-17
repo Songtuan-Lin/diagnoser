@@ -1,18 +1,16 @@
-import sys
-import os
-sys.path.append(os.path.join(os.getcwd(), "downward", "src", "translate"))
-
-import pddl_parser
 import copy
-from fd import pddl
+from typing import Tuple, List, Set, Dict
 from fd.pddl import pddl_file
-from fd.pddl.conditions import Atom
+from fd.pddl.actions import Action
+from fd.pddl.conditions import Literal, Atom
 from fd.pddl.conditions import Conjunction
 from component import CompPrec, CompEffAdd, CompEffDel
+from .fd.pddl.pddl_types import TypedObject
 from utils import TypeDGraph, find_all_tuples
 
 class DiagnosisInfo:
-    def __init__(self, result, atom, idx):
+    def __init__(self, result : bool, atom : Literal, idx : int):
+        # atom can be either positive (i.e., Atom) or negative (i.e., NegatedAtom) 
         self.result = result
         self.atom = atom
         self.idx = idx
@@ -27,13 +25,16 @@ class DiagnosisInfoMult:
                 break
 
 class System:
-    def __init__(self, domain_file, task_file, plan_file):
-        # self.task, self.constants = self.__parse(domain_file, task_file)
+    def __init__(self, domain_file : str, task_file : str, plan_file : str):
         self.task = pddl_file.open(task_file, domain_file)
-        self.constants = list(self.task.constants)
+        self.constants = list(self.task.constants) # constants in the planning problem
+        # mapping action names to Action objects 
         self.name_to_action = {a.name: a for a in self.task.actions}
+        # mapping object names to TypedObject objects
         self.name_to_object = {o.name: o for o in self.task.objects}
+        # mapping object names to the respective types
         self.object_to_type = {o.name: o.type for o in self.task.objects}
+        # type graph for storing subtype relations
         self.type_graph = TypeDGraph(self.task.types)
         try:
             with open(plan_file, "r") as pf:
@@ -43,29 +44,10 @@ class System:
             print("File {} does not exist".format(plan_file))
         if self.plan[-1][0] == ";":
             self.plan.pop(-1)
+        # computing variable substitution functions for each action in the plan
         self._get_substitutions()
 
-    def _parse(self, domain_file, task_file):
-        domain_pddl = pddl_parser.pddl_file.parse_pddl_file("domain", domain_file)
-        task_pddl = pddl_parser.pddl_file.parse_pddl_file("task", task_file)
-
-        domain_name, domain_requirements, types, type_dict, constants, predicates, predicate_dict, functions, actions, axioms = pddl_parser.parsing_functions.parse_domain_pddl(domain_pddl)
-
-        task_name, task_domain_name, task_requirements, objects, init, goal, use_metric = pddl_parser.parsing_functions.parse_task_pddl(task_pddl, type_dict, predicate_dict)
-
-        assert domain_name == task_domain_name
-        requirements = pddl.Requirements(sorted(set(
-                domain_requirements.requirements +
-                task_requirements.requirements)))
-        objects = constants + objects
-
-        pddl_parser.parsing_functions.check_for_duplicates([o.name for o in objects], errmsg="error: duplicate object %r", finalmsg="please check :constants and :objects definitions")
-        init += [pddl.Atom("=", (obj.name, obj.name)) for obj in objects]
-
-        return pddl.Task(domain_name, task_name, requirements, types, objects, predicates, functions, init, goal, actions, axioms, use_metric), constants
-
-
-    def _is_prec_sat(self, action, substitution, s):
+    def _is_prec_sat(self, action : Action, substitution : List[Tuple[Action, Dict[str, TypedObject]]], s : Set[Literal]):
         literals = (action.precondition,)
         if isinstance(action.precondition, Conjunction):
             literals = action.precondition.parts
