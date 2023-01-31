@@ -1,5 +1,6 @@
 import memhitter
 import options
+import resource
 import os
 from system import System
 
@@ -70,3 +71,6 @@ if __name__ == "__main__":
 
     with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
         f.write(syt.task.domain())
+    
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    print("Peak memory usage: {}Mb".format(float(peak/1024)))

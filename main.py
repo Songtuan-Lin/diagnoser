@@ -4,7 +4,8 @@ import logging
 import resource
 import traceback
 import options
-
+import psutil
+from memory_profiler import memory_usage
 from system import System
 from diagnoser import Diagnoser
 from tqdm import tqdm
@@ -40,6 +41,9 @@ if __name__ == "__main__":
             diagnoser = Diagnoser(syt)
             d = diagnoser.diagnosis()
             end_time = time.process_time()
+            # proc = psutil.Process(os.getpid())
+            # mem_usage = proc.memory_info().rss / (1024 * 1024)
+            mem_usage = max(memory_usage(diagnoser.diagnosis, interval=.01))
         except Exception as e:
             msg = "Failed: {}".format(task_file)
             logging.error(msg)
@@ -56,7 +60,8 @@ if __name__ == "__main__":
             for c in d:
                 f.write(str(c))
                 f.write("\n")
-            f.write("time: {}".format(diagnosis_time))
+            f.write("time: {}\n".format(diagnosis_time))
+            f.write("memory: {}".format(mem_usage))
         
         for idx, a in enumerate(syt.task.actions):
             for c in d:
@@ -65,4 +70,6 @@ if __name__ == "__main__":
         with open(os.path.join(fuzzed_dir, "domain-repaired.pddl"), "w") as f:
             f.write(syt.task.domain())
     print("- Num failed: {}".format(num_failed))
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    print("- Peak memory usage: {}Mb".format(float(peak/1024)))
 
