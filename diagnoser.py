@@ -9,7 +9,6 @@ class Diagnoser:
         self.idx_to_comp, self.comp_to_idx = {}, {}
 
     def diagnosis(self):
-        mem = []
         hitter = memhitter.Hitter()
         i = 0
         while True:
@@ -19,15 +18,6 @@ class Diagnoser:
             if info.result:
                 return candidate
             conf = self.system.find_conflict(candidate, info)
-            # mem.append(conf)
-            # print("================================")
-            # print("- Iteration: {}".format(i))
-            # for c in conf:
-            #     print(c)
-            # print("----------")
-            # print("- Conflicts")
-            # for c in mem:
-            #     print(c)
             conflict = []
             for c in conf:
                 if c not in self.comp_to_idx:
@@ -73,13 +63,10 @@ if __name__ == "__main__":
     syt = System(options.domain, options.task, options.plan) 
     diagnoser = Diagnoser(syt)
     d = diagnoser.diagnosis()
-    print("******************************************")
-    for c in d:
-        print(c)
-    # for idx, a in enumerate(syt.task.actions):
-    #         for c in d:
-    #             if a.name == c.action_name:
-    #                 syt.task.actions[idx] = c.apply(syt.task.actions[idx])
+    for idx, a in enumerate(syt.task.actions):
+            for c in d:
+                if a.name == c.action_name:
+                    syt.task.actions[idx] = c.apply(syt.task.actions[idx])
 
-    # with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
-    #     f.write(syt.task.domain())
+    with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
+        f.write(syt.task.domain())

@@ -34,7 +34,6 @@ if __name__ == "__main__":
     num_failed = 0
     for t in tqdm(fuzzed_tasks):
         fuzzed_dir, domain_file, task_file, plan_file = t
-        # print("- Task: {}".format(task_file))
         try:
             start_time = time.process_time()
             syt = System(domain_file, task_file, plan_file)
@@ -52,8 +51,6 @@ if __name__ == "__main__":
         with open(os.path.join(fuzzed_dir, "fuzz_ops.txt")) as f:
             all_ops = f.readlines()
         num_fuzz_ops = len([op for op in all_ops if op.strip()])
-        if len(d) > num_fuzz_ops:
-            print("Bug!!! in repairing {}\n".format(domain_file))
 
         with open(os.path.join(fuzzed_dir, "diagnosis"), "w") as f:
             for c in d:
