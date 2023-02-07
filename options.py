@@ -19,6 +19,11 @@ def parse_args():
     )
     argparser.add_argument(
         "--grounded", action="store_true", help="diagnosis in the grounded setting")
+    argparser.add_argument(
+        "--record_mem", action="store_true",
+        default=False,
+        help="record the memory usage"
+    )
     return argparser.parse_args()
 
 

@@ -299,13 +299,20 @@ class System:
         atom, idx = info.atom, info.idx
         conflict = set()
         assert(idx <= len(self.substitutions))
+        group_by_action = self._group_comps(candidate)
         if idx != len(self.substitutions):
             action, _ = self.substitutions[idx]
+            if action.name in group_by_action:
+                for comp in group_by_action[action.name]:
+                    action = comp.apply(action)
             atoms = self._matching_prec(idx, atom)
             for a in atoms:
                 conflict.add(CompPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
             action, _ = self.substitutions[i]
+            if action.name in group_by_action:
+                for comp in group_by_action[action.name]:
+                    action = comp.apply(action)
             if not atom.negated:
                 conf_add_atoms = self._matching_add_effs(i, atom)
             else:

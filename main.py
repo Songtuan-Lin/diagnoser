@@ -41,9 +41,8 @@ if __name__ == "__main__":
             diagnoser = Diagnoser(syt)
             d = diagnoser.diagnosis()
             end_time = time.process_time()
-            # proc = psutil.Process(os.getpid())
-            # mem_usage = proc.memory_info().rss / (1024 * 1024)
-            mem_usage = max(memory_usage(diagnoser.diagnosis, interval=.01))
+            if options.record_mem:
+                mem_usage = max(memory_usage(diagnoser.diagnosis, interval=.01))
         except Exception as e:
             msg = "Failed: {}".format(task_file)
             logging.error(msg)
@@ -61,7 +60,8 @@ if __name__ == "__main__":
                 f.write(str(c))
                 f.write("\n")
             f.write("time: {}\n".format(diagnosis_time))
-            f.write("memory: {}".format(mem_usage))
+            if options.record_mem:
+                f.write("memory: {}".format(mem_usage))
         
         for idx, a in enumerate(syt.task.actions):
             for c in d:
