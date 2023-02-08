@@ -4,7 +4,6 @@ import logging
 import resource
 import traceback
 import options
-import psutil
 from memory_profiler import memory_usage
 from system import System
 from diagnoser import Diagnoser
@@ -17,6 +16,8 @@ logger=logging.getLogger(__name__)
 if __name__ == "__main__":
     fuzzed_tasks = []
     for domain_name in os.listdir(options.benchmark_dir):
+        if domain_name == ".ipynb_checkpoints":
+            continue
         domain_dir = os.path.join(options.benchmark_dir, domain_name)
         if not os.path.isdir(domain_dir):
             continue
@@ -62,6 +63,9 @@ if __name__ == "__main__":
             f.write("time: {}\n".format(diagnosis_time))
             if options.record_mem:
                 f.write("memory: {}".format(mem_usage))
+            else:
+                peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                f.write("memory: {}".format(float(peak/1024)))
         
         for idx, a in enumerate(syt.task.actions):
             for c in d:
