@@ -170,7 +170,10 @@ class System:
                 atoms.add(literal)
         return atoms
 
-    def _matching_prec(self, idx : int, atom : Literal) -> Set[Literal]:
+    def _matching_prec(self, 
+                       action : Action, 
+                       substitution: VarSubstitution, 
+                       atom : Literal) -> Set[Literal]:
         """Computing a set of atoms that can be removed from the action schema's
         (specified by the index in the plan) precondition, provided a proposition
         in some action's precondition that is not satisfied.
@@ -182,13 +185,15 @@ class System:
         Returns:
             Set[Literal]: A set of atoms
         """
-        action, substitution = self.substitutions[idx]
         literals = (action.precondition, )
         if isinstance(action.precondition, Conjunction):
             literals = action.precondition.parts
         return self._matching(literals, substitution, atom)
 
-    def _matching_neg_effs(self, idx : int, atom : Literal) -> Set[Literal]:
+    def _matching_neg_effs(self, 
+                           action: Action, 
+                           substitution: VarSubstitution, 
+                           atom : Literal) -> Set[Literal]:
         """Computing a set of atoms that can be deleted from the action schema's
         (specified by the index in the plan) negative effects provided a proposition
         in some action's precondition that is not satisfied.
@@ -200,11 +205,13 @@ class System:
         Returns:
             Set[Literal]: A set of atoms
         """
-        action, substitution = self.substitutions[idx]
         del_effs = [eff.literal.negate() for eff in action.effects if eff.literal.negated]
         return self._matching(del_effs, substitution, atom)
     
-    def _matching_pos_effs(self, idx : int, atom : Literal) -> Set[Literal]:
+    def _matching_pos_effs(self, 
+                           action: Action, 
+                           substitution: VarSubstitution, 
+                           atom : Literal) -> Set[Literal]:
         """Computing a set of atoms that can be deleted from the action schema's
         (specified by the index in the plan) positive effects provided a proposition
         in some action's precondition that is not satisfied.
@@ -216,11 +223,13 @@ class System:
         Returns:
             Set[Literal]: A set of atoms
         """
-        action, substitution = self.substitutions[idx]
         pos_effs = [eff.literal for eff in action.effects if not eff.literal.negated]
         return self._matching(pos_effs, substitution, atom)
 
-    def _matching_add_effs(self, idx : int, atom : Literal) -> Set[Literal]:
+    def _matching_add_effs(self, 
+                           action: Action, 
+                           substitution: VarSubstitution, 
+                           atom : Literal) -> Set[Literal]:
         """Finding a set of atoms (either positive or negative) that can be
         added to an action schema's (specified by the idx in plan) effects
         (either positive or negative), provided the proposition (either
@@ -236,7 +245,6 @@ class System:
         """
         # can be further optimized
         matched_paras = []
-        action, substitution = self.substitutions[idx]
         for o in atom.args:
             paras = []
             for para in action.parameters:
@@ -301,22 +309,22 @@ class System:
         assert(idx <= len(self.substitutions))
         group_by_action = self._group_comps(candidate)
         if idx != len(self.substitutions):
-            action, _ = self.substitutions[idx]
+            action, substitution = self.substitutions[idx]
             if action.name in group_by_action:
                 for comp in group_by_action[action.name]:
                     action = comp.apply(action)
-            atoms = self._matching_prec(idx, atom)
+            atoms = self._matching_prec(action, substitution, atom)
             for a in atoms:
                 conflict.add(CompPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
-            action, _ = self.substitutions[i]
+            action, substitution = self.substitutions[i]
             if action.name in group_by_action:
                 for comp in group_by_action[action.name]:
                     action = comp.apply(action)
             if not atom.negated:
-                conf_add_atoms = self._matching_add_effs(i, atom)
+                conf_add_atoms = self._matching_add_effs(action, substitution, atom)
             else:
-                conf_add_atoms = [a.negate() for a in self._matching_add_effs(i, atom.negate())]
+                conf_add_atoms = [a.negate() for a in self._matching_add_effs(action, substitution, atom.negate())]
             has_neg_conf = False
             for a in conf_add_atoms:
                 comp = CompEffAdd(action.name, a)
@@ -327,9 +335,9 @@ class System:
                         break
 
             if not atom.negated:
-                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(i, atom)]
+                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(action, substitution, atom)]
             else:
-                conf_del_atoms = self._matching_pos_effs(i, atom.negate())
+                conf_del_atoms = self._matching_pos_effs(action, substitution, atom.negate())
             if len(conf_del_atoms) > 0:
                 for a in conf_del_atoms:
                     conflict.add(CompEffDel(action.name, a))

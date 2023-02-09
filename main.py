@@ -55,6 +55,8 @@ if __name__ == "__main__":
         with open(os.path.join(fuzzed_dir, "fuzz_ops.txt")) as f:
             all_ops = f.readlines()
         num_fuzz_ops = len([op for op in all_ops if op.strip()])
+        # if (num_fuzz_ops < len(d)):
+        #     print("Bug!!!: {}".format(task_file))
 
         with open(os.path.join(fuzzed_dir, "diagnosis"), "w") as f:
             for c in d:
