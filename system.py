@@ -179,7 +179,8 @@ class System:
         in some action's precondition that is not satisfied.
 
         Args:
-            idx (int): Index in the plan
+            action (Action): an action schema
+            substitution (VarSubstitution): a variable substitution function
             atom (Literal): A grounded atom
 
         Returns:
@@ -199,7 +200,8 @@ class System:
         in some action's precondition that is not satisfied.
 
         Args:
-            idx (int): Index in the plan
+            action (Action): an action schema
+            substitution (VarSubstitution): a variable substitution function
             atom (Literal): A grounded atom
 
         Returns:
@@ -217,7 +219,8 @@ class System:
         in some action's precondition that is not satisfied.
 
         Args:
-            idx (int): Index in the plan
+            action (Action): an action schema
+            substitution (VarSubstitution): a variable substitution function
             atom (Literal): A grounded atom
 
         Returns:
@@ -237,7 +240,8 @@ class System:
         satisfied.
 
         Args:
-            idx (int): Index in the plan
+            action (Action): an action schema
+            substitution (VarSubstitution): a variable substitution function
             atom (Literal): Grounded atom
 
         Returns:
@@ -324,7 +328,9 @@ class System:
             if not atom.negated:
                 conf_add_atoms = self._matching_add_effs(action, substitution, atom)
             else:
-                conf_add_atoms = [a.negate() for a in self._matching_add_effs(action, substitution, atom.negate())]
+                conf_add_atoms = [a.negate() for a in self._matching_add_effs(action, 
+                                                                              substitution, 
+                                                                              atom.negate())]
             has_neg_conf = False
             for a in conf_add_atoms:
                 comp = CompEffAdd(action.name, a)

@@ -71,6 +71,10 @@ if __name__ == "__main__":
                 if a.name == c.action_name:
                     syt.task.actions[idx] = c.apply(syt.task.actions[idx])
 
+    with open(os.path.join(options.out_dir, "diagnosis.txt"), "w") as f:
+        for c in d:
+            f.write(str(c))
+            f.write("\n")
     with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
         f.write(syt.task.domain())
     
