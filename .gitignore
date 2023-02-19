@@ -1,3 +1,4 @@
 downward/
 __pycache__/
 *.log
+.vscode/

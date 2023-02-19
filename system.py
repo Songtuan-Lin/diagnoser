@@ -267,6 +267,24 @@ class System:
                 re.add(Atom(atom.predicate, t))
         return re
 
+    def _get_repaired_action(
+            self, action : Action, 
+            repairs_to_actions : Dict[str, List[Component]]) -> Action:
+        """Apply repairs to an action
+
+        Args:
+            action (Action): An action to be repaired
+            repairs_to_actions (Dict[str, List[Component]]): A group of repairs
+                targeted at the action
+
+        Returns:
+            Action: _description_
+        """
+        if action.name in repairs_to_actions:
+            for comp in repairs_to_actions[action.name]:
+                action = comp.apply(action)
+        return action
+
     def is_diagnosis(self, candidate : Set[Component]) -> DiagnosisInfo:
         """Deciding whether a candidate set of components is a diagnosis.
 
@@ -277,12 +295,10 @@ class System:
             DiagnosisInfo: Information about the test
         """
         self.cache = []
-        group_by_action = self._group_comps(candidate)
+        repairs_to_actions = self._group_comps(candidate)
         s = set(self.task.init.copy())
         for idx, (action, substitution) in enumerate(self.substitutions):
-            if action.name in group_by_action:
-                for comp in group_by_action[action.name]:
-                    action = comp.apply(action) # apply the repair (component)
+            action = self._get_repaired_action(action, repairs_to_actions)
             # self.cache.append(action)
             # decide whether the action's precondition is satisfied
             unsat_atom = self._is_prec_sat(action, substitution, s)
@@ -311,20 +327,16 @@ class System:
         atom, idx = info.atom, info.idx
         conflict = set()
         assert(idx <= len(self.substitutions))
-        group_by_action = self._group_comps(candidate)
+        repairs_to_action = self._group_comps(candidate)
         if idx != len(self.substitutions):
             action, substitution = self.substitutions[idx]
-            if action.name in group_by_action:
-                for comp in group_by_action[action.name]:
-                    action = comp.apply(action)
+            action = self._get_repaired_action(action, repairs_to_action)
             atoms = self._matching_prec(action, substitution, atom)
             for a in atoms:
                 conflict.add(CompPrec(action.name, a))
         for i in range(idx - 1, -1, -1):
             action, substitution = self.substitutions[i]
-            if action.name in group_by_action:
-                for comp in group_by_action[action.name]:
-                    action = comp.apply(action)
+            action = self._get_repaired_action(action, repairs_to_action)
             if not atom.negated:
                 conf_add_atoms = self._matching_add_effs(action, substitution, atom)
             else:
@@ -339,9 +351,10 @@ class System:
                     if c in candidate:
                         has_neg_conf = True
                         break
-
             if not atom.negated:
-                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(action, substitution, atom)]
+                conf_del_atoms = [a.negate() for a in self._matching_neg_effs(action, 
+                                                                              substitution, 
+                                                                              atom)]
             else:
                 conf_del_atoms = self._matching_pos_effs(action, substitution, atom.negate())
             if len(conf_del_atoms) > 0:
@@ -350,7 +363,6 @@ class System:
                 break
             if has_neg_conf:
                 break
-
         cached = set()
         for c in candidate:
             if isinstance(c, CompPrec):
