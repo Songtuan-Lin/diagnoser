@@ -3,6 +3,9 @@ import sys
 import subprocess
 import logging
 import options
+import multiprocessing
+
+from functools import partial
 from tqdm import tqdm
 
 
@@ -19,38 +22,52 @@ class Evaluator:
     def _collect_benchmarks(self, err_rate : float,
                             benchmark_dir : str) -> None:
         raise NotImplementedError
+
+    def _run(self, lock, task) -> bool:
+        cmd = [sys.executable, "../diagnoser.py"]
+        (fuzzed_domain_dir, domain_file, 
+                task_files, plan_files) = task
+        if not type(task_files) == list:
+                task_files = [task_files]
+        if not type(plan_files) == list:
+            plan_files = [plan_files]
+        domain_arg = ["--domain", domain_file]
+        cmd += domain_arg
+        task_args = ["--tasks"]
+        for task_file in task_files:
+            task_args.append(task_file)
+        cmd += task_args
+        plan_args = ["--plans"]
+        for plan_file in plan_files:
+            plan_args.append(plan_file)
+        cmd += plan_args
+        subargs = ["--out_diagnosis",
+                    fuzzed_domain_dir,
+                    "--out_domain",
+                    fuzzed_domain_dir,
+                    "--evaluation"]
+        cmd += subargs
+        proc = subprocess.run(cmd, text=True,
+                                capture_output=True)
+        if proc.returncode:
+            msg = "Failed: {}".format(task_files)
+            lock.acquire()
+            self.logger.debug(msg)
+            self.logger.debug(proc.stdout)
+            self.logger.debug(proc.stderr)
+            lock.release()
+            return False
+        return True
     
     def evaluate(self) -> None:
-        cmd = [sys.executable, "../diagnoser.py"]
-        for (fuzzed_domain_dir, domain_file, 
-                task_files, plan_files) in tqdm(self.tasks):
-            if not type(task_files) == list:
-                task_files = [task_files]
-            if not type(plan_files) == list:
-                plan_files = [plan_files]
-            domain_arg = ["--domain", domain_file]
-            cmd += domain_arg
-            task_args = ["--tasks"]
-            for task_file in task_files:
-                task_args.append(task_file)
-            cmd += task_args
-            plan_args = ["--plans"]
-            for plan_file in plan_files:
-                plan_args.append(plan_file)
-            cmd += plan_args
-            subargs = ["--out_diagnosis",
-                       fuzzed_domain_dir,
-                       "--out_domain",
-                       fuzzed_domain_dir,
-                       "--evaluation"]
-            cmd += subargs
-            proc = subprocess.run(cmd, text=True,
-                                  capture_output=True)
-            if proc.returncode:
-                msg = "Failed: {}".format(task_files)
-                self.logger.debug(msg)
-                self.logger.debug(proc.stdout)
-                self.logger.debug(proc.stderr)
+        num_cpus = multiprocessing.cpu_count()
+        lock = multiprocessing.Manager().Lock()
+        # instance_dirs = [(lock, instance_dir) for instance_dir in instance_dirs]
+        if options.num_cpus is not None:
+            num_cpus = options.num_cpus
+        with multiprocessing.Pool(num_cpus) as p:
+            _ = list(tqdm(p.imap(partial(self._run, lock), self.tasks), 
+                          total=len(self.tasks)))
 
 
 class EvaluatorOneToOne(Evaluator):
@@ -112,7 +129,7 @@ class EvaluatorOneToMult(Evaluator):
                                task_files, plan_files))
             
 if __name__ == "__main__":
-    if options.name == "eval_one_to_one":
+    if options.name == "single":
         print("- Start evaluation on instances where" 
               " one domain is paired with one plan")
         for err_rate in options.err_rates:
@@ -122,7 +139,7 @@ if __name__ == "__main__":
                     err_rate, options.benchmark_dir)
             evaluator.evaluate()
             print("- Done!")
-    elif options.name == "eval_one_to_mult":
+    elif options.name == "batch":
         print("- Start evaluation on instances where" 
               " one domain is paired with multiple plans")
         for err_rate in options.err_rates:
