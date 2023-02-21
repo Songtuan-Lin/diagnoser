@@ -187,6 +187,23 @@ class System:
                 var_map.update([(c.name, c) for c in self.constants])
                 self.substitutions.append((action, var_map))
 
+        def _is_existing_eff(self, action : Action, atom : Atom) -> bool:
+            """Checking whether an atom is already in an action's
+            (positive or negative) effects           
+
+            Args:
+                action (Action): an action
+                atom (Atom): an atom to be checked
+
+            Returns:
+                bool: True if the atom is in the action's effects,
+                False otherwise
+            """
+            for eff in action.effects:
+                if eff.literal == atom:
+                    return True
+            return False
+
         def _matching(self, parts : List[Literal], substitution : VarSubstitution, atom : Literal) -> Set[Literal]:
             """Computing all atoms in some action schema which can be grounded to a
             given proposition under a provided variable substitution function.
@@ -376,12 +393,12 @@ class System:
             for i in range(idx - 1, -1, -1):
                 action, substitution = self.substitutions[i]
                 action = self._get_repaired_action(action, repairs_to_action)
-                if not atom.negated:
-                    conf_add_atoms = self._matching_add_effs(action, substitution, atom)
-                else:
-                    conf_add_atoms = [a.negate() for a in self._matching_add_effs(action, 
-                                                                                substitution, 
-                                                                                atom.negate())]
+                conf_add_atoms = []
+                t = atom.negate() if atom.negated else atom
+                for a in self._matching_add_effs(action, substitution, t):
+                    a = a.negate() if atom.negated else a
+                    if not self._is_existing_eff(action, a):
+                        conf_add_atoms.append(a)
                 has_neg_conf = False
                 for a in conf_add_atoms:
                     comp = CompEffAdd(action.name, a)
@@ -390,12 +407,13 @@ class System:
                         if c in candidate:
                             has_neg_conf = True
                             break
+                conf_del_atoms = []
                 if not atom.negated:
-                    conf_del_atoms = [a.negate() for a in self._matching_neg_effs(action, 
-                                                                                substitution, 
-                                                                                atom)]
+                    for a in self._matching_neg_effs(action, substitution, atom):
+                        conf_del_atoms.append(a.negate())
                 else:
-                    conf_del_atoms = self._matching_pos_effs(action, substitution, atom.negate())
+                    conf_del_atoms = self._matching_pos_effs(
+                            action, substitution, atom.negate())
                 if len(conf_del_atoms) > 0:
                     for a in conf_del_atoms:
                         conflict.add(CompEffDel(action.name, a))
@@ -419,6 +437,7 @@ class System:
                         assert(c_copy.is_condition)
             for c in candidate:
                 if (c in conflict) and (c not in cached):
+                    assert(False)
                     conflict.remove(c)
             return conflict
 
