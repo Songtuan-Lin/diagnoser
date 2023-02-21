@@ -420,7 +420,6 @@ class System:
                     break
                 if has_neg_conf:
                     break
-            cached = set()
             for c in candidate:
                 if isinstance(c, CompPrec):
                     continue
@@ -430,11 +429,6 @@ class System:
                         conflict.add(c)
                         c.is_condition = True
                         conflict.remove(neg_conf)
-                        cached.add(c)
-            for c in candidate:
-                if (c in conflict) and (c not in cached):
-                    assert(False)
-                    conflict.remove(c)
             return conflict
 
 if __name__ == "__main__":
