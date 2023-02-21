@@ -427,14 +427,10 @@ class System:
                 neg_confs = c.negate()
                 for neg_conf in neg_confs:
                     if neg_conf in conflict:
-                        c_copy = copy.copy(c)
-                        conflict.add(c_copy)
-                        # conflict.add(c)
-                        # c.is_condition = True
-                        c_copy.is_condition = True
+                        conflict.add(c)
+                        c.is_condition = True
                         conflict.remove(neg_conf)
-                        cached.add(c_copy)
-                        assert(c_copy.is_condition)
+                        cached.add(c)
             for c in candidate:
                 if (c in conflict) and (c not in cached):
                     assert(False)

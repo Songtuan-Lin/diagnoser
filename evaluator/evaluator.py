@@ -59,12 +59,8 @@ class Evaluator:
             return False
         return True
     
-    def evaluate(self) -> None:
-        num_cpus = multiprocessing.cpu_count()
+    def evaluate(self, num_cpus) -> None:
         lock = multiprocessing.Manager().Lock()
-        # instance_dirs = [(lock, instance_dir) for instance_dir in instance_dirs]
-        if options.num_cpus is not None:
-            num_cpus = options.num_cpus
         with multiprocessing.Pool(num_cpus) as p:
             _ = list(tqdm(p.imap(partial(self._run, lock), self.tasks), 
                           total=len(self.tasks)))
@@ -129,6 +125,11 @@ class EvaluatorOneToMult(Evaluator):
                                task_files, plan_files))
             
 if __name__ == "__main__":
+    num_cpus = multiprocessing.cpu_count()
+    print("- Number of avaliable CPUs: {}".format(num_cpus))
+    if options.num_cpus is not None:
+        num_cpus = options.num_cpus
+    print("- Using {} CPUs".format(num_cpus))
     if options.name == "single":
         print("- Start evaluation on instances where" 
               " one domain is paired with one plan")
@@ -137,7 +138,7 @@ if __name__ == "__main__":
                    " error rate {}".format(err_rate)))
             evaluator = EvaluatorOneToOne(
                     err_rate, options.benchmark_dir)
-            evaluator.evaluate()
+            evaluator.evaluate(num_cpus)
             print("- Done!")
     elif options.name == "batch":
         print("- Start evaluation on instances where" 
@@ -147,7 +148,7 @@ if __name__ == "__main__":
                    " error rate {}".format(err_rate)))
             evaluator = EvaluatorOneToMult(
                     err_rate, options.benchmark_dir)
-            evaluator.evaluate()
+            evaluator.evaluate(num_cpus)
             print("- Done!")
     else:
         raise ValueError
