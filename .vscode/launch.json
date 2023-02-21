@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["--domain", "~/Datasets/fuzzy-1-domain-1-task/blocks/probBLOCKS-10-1/err-rate-0.5/domain.pddl", "--tasks", "~/Datasets/fuzzy-1-domain-1-task/blocks/probBLOCKS-10-1/probBLOCKS-10-1.pddl", "--plans", "~/Datasets/fuzzy-1-domain-1-task/blocks/probBLOCKS-10-1/sas_plan", "--print"]
+            "args": ["eval_one_to_one", "--benchmark_dir", "~/Datasets/fuzzy-1-domain-1-task/", "--err_rates", "0.1", "0.3", "0.5"]
         }
     ]
 }

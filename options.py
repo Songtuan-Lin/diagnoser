@@ -5,13 +5,13 @@ import sys
 def parse_args():
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
-            "--domain", required=True,
+            "--domain", required=False,
             help="path to the domain pddl file")
     argparser.add_argument(
-            "--tasks", nargs="+", required=True,
+            "--tasks", nargs="+", required=False,
             help="path to the task pddl files")
     argparser.add_argument(
-            "--plans", nargs="+", required=True,
+            "--plans", nargs="+", required=False,
             help="path to the plan files")
     argparser.add_argument(
             "--out_diagnosis", type=str,

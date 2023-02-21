@@ -414,12 +414,12 @@ class System:
                         # conflict.add(c)
                         # c.is_condition = True
                         c_copy.is_condition = True
-                        # conflict.remove(neg_conf)
+                        conflict.remove(neg_conf)
                         cached.add(c_copy)
                         assert(c_copy.is_condition)
-            # for c in candidate:
-            #     if (c in conflict) and (c not in cached):
-            #         conflict.remove(c)
+            for c in candidate:
+                if (c in conflict) and (c not in cached):
+                    conflict.remove(c)
             return conflict
 
 if __name__ == "__main__":

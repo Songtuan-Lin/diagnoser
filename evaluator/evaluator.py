@@ -5,6 +5,7 @@ import logging
 import options
 from tqdm import tqdm
 
+
 class Evaluator:
     def __init__(self, err_rate : float, 
                  benchmark_dir : str) -> None:
@@ -23,10 +24,21 @@ class Evaluator:
         cmd = [sys.executable, "../diagnoser.py"]
         for (fuzzed_domain_dir, domain_file, 
                 task_files, plan_files) in tqdm(self.tasks):
-            subargs = ["--domain", domain_file,
-                       "--tasks", task_files,
-                       "--plans", plan_files,
-                       "--out_diagnosis",
+            if not type(task_files) == list:
+                task_files = [task_files]
+            if not type(plan_files) == list:
+                plan_files = [plan_files]
+            domain_arg = ["--domain", domain_file]
+            cmd += domain_arg
+            task_args = ["--tasks"]
+            for task_file in task_files:
+                task_args.append(task_file)
+            cmd += task_args
+            plan_args = ["--plans"]
+            for plan_file in plan_files:
+                plan_args.append(plan_file)
+            cmd += plan_args
+            subargs = ["--out_diagnosis",
                        fuzzed_domain_dir,
                        "--out_domain",
                        fuzzed_domain_dir,
@@ -104,17 +116,21 @@ if __name__ == "__main__":
         print("- Start evaluation on instances where" 
               " one domain is paired with one plan")
         for err_rate in options.err_rates:
+            print(("- Evaluating instances of" 
+                   " error rate {}".format(err_rate)))
             evaluator = EvaluatorOneToOne(
                     err_rate, options.benchmark_dir)
             evaluator.evaluate()
-        print("- Done!")
+            print("- Done!")
     elif options.name == "eval_one_to_mult":
         print("- Start evaluation on instances where" 
               " one domain is paired with multiple plans")
         for err_rate in options.err_rates:
+            print(("- Evaluating instances of" 
+                   " error rate {}".format(err_rate)))
             evaluator = EvaluatorOneToMult(
                     err_rate, options.benchmark_dir)
             evaluator.evaluate()
-        print("- Done!")
+            print("- Done!")
     else:
         raise ValueError
