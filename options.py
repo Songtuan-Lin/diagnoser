@@ -5,25 +5,26 @@ import sys
 def parse_args():
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
-        "--benchmark_dir", type=str, help="directory of the benchmark set")
+            "--domain", required=True,
+            help="path to the domain pddl file")
     argparser.add_argument(
-        "--err_rate", type=float, help="error rate")
+            "--tasks", nargs="+", required=True,
+            help="path to the task pddl files")
     argparser.add_argument(
-        "--domain", help="path to domain pddl file")
+            "--plans", nargs="+", required=True,
+            help="path to the plan files")
     argparser.add_argument(
-        "--task", help="path to task pddl file")
+            "--out_diagnosis", type=str,
+            help="file for writting the diagnosis")
     argparser.add_argument(
-        "--plan", help="path to plan file")
+            "--out_domain", type=str,
+            help="file for writting the repaired domain")
     argparser.add_argument(
-        "--out_dir", help="path to write repaired domain pddl file"
-    )
+            "--evaluation", action="store_true", default=False, 
+            help="run the diagnoser for evaluation")
     argparser.add_argument(
-        "--grounded", action="store_true", help="diagnosis in the grounded setting")
-    argparser.add_argument(
-        "--record_mem", action="store_true",
-        default=False,
-        help="record the memory usage"
-    )
+            "--print", action="store_true", default=False,
+            help="print the found diagnosis")
     return argparser.parse_args()
 
 

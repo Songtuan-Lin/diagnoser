@@ -34,7 +34,8 @@ class TypeDGraph(DGraph):
         super().__init__(len(types))
         for t in types:
             if t.basetype_name:
-                super().add_edge(self.v_map[t.name], self.v_map[t.basetype_name]) 
+                super().add_edge(self.v_map[t.name], 
+                                 self.v_map[t.basetype_name]) 
 
     def subtype(self, x, y):
         return super().connected(self.v_map[x], self.v_map[y])

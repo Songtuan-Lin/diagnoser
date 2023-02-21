@@ -1,6 +1,7 @@
 import memhitter
 import options
 import resource
+import time
 import os
 from system import System
 
@@ -11,41 +12,13 @@ class Diagnoser:
 
     def diagnosis(self):
         hitter = memhitter.Hitter()
-        i = 0
         while True:
             candidate = hitter.top()
             candidate = set(self.idx_to_comp[x] for x in candidate)
-            info = self.system.is_diagnosis(candidate)
-            if info.result:
-                return candidate
-            conf = self.system.find_conflict(candidate, info)
-            conflict = []
-            for c in conf:
-                if c not in self.comp_to_idx:
-                    idx = len(self.comp_to_idx) + 1
-                    self.comp_to_idx[c] = idx
-                    self.idx_to_comp[idx] = c
-                if c.is_condition:
-                    conflict.append(-self.comp_to_idx[c])
-                else:
-                    conflict.append(self.comp_to_idx[c])
-            hitter.add_conflict(conflict)
-            i += 1
-
-class DiagnoserMult:
-    def __init__(self, system_mult):
-        self.system_mult = system_mult
-        self.idx_to_comp, self.comp_to_idx = {}, {}
-
-    def diagnosis(self):
-        hitter = memhitter.Hitter()
-        while True:
-            candidate = hitter.top()
-            candidate = set(self.idx_to_comp[x] for x in candidate)
-            infos = self.system_mult.is_diagnosis(candidate)
+            infos = self.system.is_diagnosis(candidate)
             if infos.result:
                 return candidate
-            confs = self.system_mult.find_conflict(candidate, infos)
+            confs = self.system.find_conflict(candidate, infos)
             for conf in confs:
                 conflict = []
                 for c in conf:
@@ -61,22 +34,38 @@ class DiagnoserMult:
 
     
 if __name__ == "__main__":
-    syt = System(options.domain, options.task, options.plan) 
+    start_time = time.process_time()
+    syt = System(options.domain, options.tasks, options.plans) 
     diagnoser = Diagnoser(syt)
     d = diagnoser.diagnosis()
-    for c in d:
-        print(c)
-    for idx, a in enumerate(syt.task.actions):
+    end_time = time.process_time()
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if (options.evaluation
+            and options.out_diagnosis is None):
+        print("An output file for writting the dignosis " 
+              "is required in the evaluation mode")
+    if options.print:
+        for c in d:
+            print(c)
+    if options.out_diagnosis is not None:
+        out_file = os.path.join(
+                options.out_diagnosis,
+                "diagnosis")
+        with open(out_file, "w") as f:
+            for c in d:
+                f.write(str(c) + "\n")
+            if options.evaluation:
+                elapsed_time = end_time - start_time
+                f.write(str(elapsed_time) + "\n")
+                f.write("memory: {}".format(float(peak/1024)))
+    if options.out_domain is not None:
+        out_file = os.path.join(
+                options.out_domain,
+                "domain-repaired.pddl")
+        task = syt.get_task()
+        for idx, a in enumerate(task.actions):
             for c in d:
                 if a.name == c.action_name:
-                    syt.task.actions[idx] = c.apply(syt.task.actions[idx])
-
-    with open(os.path.join(options.out_dir, "diagnosis.txt"), "w") as f:
-        for c in d:
-            f.write(str(c))
-            f.write("\n")
-    with open(os.path.join(options.out_dir, "domain-repaired.pddl"), "w") as f:
-        f.write(syt.task.domain())
-    
-    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    print("Peak memory usage: {}Mb".format(float(peak/1024)))
+                    task.actions[idx] = c.apply(task.actions[idx])
+        with open(out_file, "w") as f:
+            f.write(task.domain())
