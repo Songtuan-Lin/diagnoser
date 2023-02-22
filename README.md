@@ -1,6 +1,8 @@
 # Introduction
 This is the implementation of the planning domain repair approach described in the paper *Towards Automated Modeling Assistance: An Efficient Approach for Repairing Flawed Planning Domains* accepted by AAAI 2023. The program takes as input a (potentially flawed) PDDL domain file, a list of PDDL task files, and a list of plan files containing plans each of which is supposed to be a solution to the respective given planning task (but it might not be the case due to the flaws in the given domain) and outputs a repaired domain in which every given plan is guaranteed to be a solution.
 
+The implementation relies on the PDDL parser (in the directory fd) that is copied from the project [LAPKT](https://github.com/LAPKT-dev/LAPKT-public/). 
+
 # Run the Domain Repairer
 
 ## Requirement
