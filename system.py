@@ -1,4 +1,3 @@
-import copy
 from typing import Tuple, List, Set, Dict, Optional
 from fd.pddl import pddl_file
 from fd.pddl.tasks import Task
