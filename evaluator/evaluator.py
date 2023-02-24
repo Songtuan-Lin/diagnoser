@@ -130,7 +130,7 @@ if __name__ == "__main__":
     if options.num_cpus is not None:
         num_cpus = options.num_cpus
     print("- Using {} CPUs".format(num_cpus))
-    if options.name == "single":
+    if options.single:
         print("- Start evaluation on instances where" 
               " one domain is paired with one plan")
         for err_rate in options.err_rates:
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                     err_rate, options.benchmark_dir)
             evaluator.evaluate(num_cpus)
             print("- Done!")
-    elif options.name == "batch":
+    elif options.multiple:
         print("- Start evaluation on instances where" 
               " one domain is paired with multiple plans")
         for err_rate in options.err_rates:
