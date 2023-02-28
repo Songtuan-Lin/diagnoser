@@ -39,7 +39,7 @@ to check all arguments accepted by the program.
 
 # Reproduce the Experiment Results
 
-The directory *evaluator* contains the code for reproducing the experiment results reported in the paper. For more details, please checkout our published benchmark sets.
+The directory *evaluator* contains the code for reproducing the experiment results reported in the paper. For more details, please check out our published benchmark sets (**TODO: add the link**) together with the instructions (click [here](https://github.com/Songtuan-Lin/aaai-2023-repairing-domains-benchmarks)) for running the evaluator.
 
 # Cite
 ```
