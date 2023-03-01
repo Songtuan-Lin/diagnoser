@@ -5,11 +5,11 @@ The implementation relies on the PDDL parser (in the directory fd) that is copie
 
 # Run the Domain Repairer
 
-## Requirement
+### Requirement
 
 The program is written in python. Thus, you must have Python installed in your device in order to run the code.
 
-## Command
+### Command
 
 You can use the following command to run the domain repairer, assuming that you are in the directory containing this README file. 
 
@@ -39,7 +39,7 @@ to check all arguments accepted by the program.
 
 # Reproduce the Experiment Results
 
-The directory *evaluator* contains the code for reproducing the experiment results reported in the paper. For more details, please check out our published benchmark sets (**TODO: add the link**) together with the instructions (click [here](https://github.com/Songtuan-Lin/aaai-2023-repairing-domains-benchmarks)) for running the evaluator.
+The directory *evaluator* contains the code for reproducing the experiment results reported in the paper. For more details, please check out the published benchmark sets via this [link](https://github.com/Songtuan-Lin/aaai-2023-repairing-domains-benchmarks) where you can also find the detailed instructions for running the evaluator.
 
 # Cite
 ```
