@@ -37,10 +37,6 @@ python diagnoser.py --help
 ```
 to check all arguments accepted by the program.
 
-# Reproduce the Experiment Results
-
-The directory *evaluator* contains the code for reproducing the experiment results reported in the paper. For more details, please check out the published benchmark sets via this [link](https://github.com/Songtuan-Lin/aaai-2023-repairing-domains-benchmarks) where you can also find the detailed instructions for running the evaluator.
-
 # Cite
 ```
 @InProceedings{Lin2023RepairingClassicalModels,
